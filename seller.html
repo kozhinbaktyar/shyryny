@@ -97,7 +97,7 @@ th{color:var(--mut);font-weight:600}
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getDatabase,ref,onValue,push,set,update,remove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import {getDatabase,ref,get,onValue,push,set,update,remove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
 const app=initializeApp({
   apiKey:"AIzaSyDLxTVgoGaTmN5eZdJXHXuLq95xQY67bUs",
@@ -120,7 +120,12 @@ $("lbtn").onclick=async()=>{
   catch{$("lerr").textContent="ئیمەیڵ یان وشەی نهێنی هەڵەیە. دووبارە هەوڵ بدەرەوە."}
 };
 $("out").onclick=()=>signOut(auth);
-onAuthStateChanged(auth,u=>{
+onAuthStateChanged(auth,async u=>{
+  if(u){
+    let ok=false;
+    try{ok=(await get(ref(db,"staff/"+u.uid))).val()?.role==="admin"}catch{}
+    if(!ok){$("lerr").textContent="ئەم هەژمارە ڕێگەپێدراو نییە (لە staff وەک admin تۆمار نەکراوە).";await signOut(auth);return}
+  }
   $("login").classList.toggle("hide",!!u);
   $("app").classList.toggle("hide",!u);
   if(u&&!started){started=true;listen()}
