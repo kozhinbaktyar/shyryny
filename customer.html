@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>شیرینی</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#b8305f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#f8f4f7;--card:#fff;--ink:#2d1b2e;--mut:#7d6a7e;--pri:#b8305f;--bd:#e6dbe5}
+@media(prefers-color-scheme:dark){:root{--bg:#1c141d;--card:#2a1e2b;--ink:#f5e9f3;--mut:#b6a2b6;--pri:#f06a9a;--bd:#46354a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Naskh Arabic","Segoe UI",Tahoma,sans-serif;padding-bottom:90px}
+header{background:var(--pri);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:10px}
+header h1{margin:0;font-size:22px;flex:1}
+button,input,textarea{font:inherit;color:inherit}
+button{border:1px solid var(--bd);background:var(--card);padding:8px 16px;border-radius:10px;cursor:pointer}
+button.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+header button{background:transparent;border-color:#fff8;color:#fff;font-size:14px}
+input,textarea{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+label{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px}
+.chips button{flex:none;border-radius:99px}
+.chips button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:0 16px;max-width:960px;margin:0 auto}
+.item{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.item img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--bd);display:block}
+.item .b{padding:10px 12px;display:flex;flex-direction:column;gap:2px;flex:1}
+.item .d{font-size:13px;color:var(--mut);flex:1}
+.price{font-weight:700}
+.step{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.step button{width:40px;height:40px;padding:0;font-size:20px}
+.step b{min-width:28px;text-align:center}
+#bar{position:fixed;inset:auto 0 0 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--bd)}
+#bar button{width:100%;display:flex;justify-content:space-between;padding:14px 18px;font-weight:700}
+.shade{position:fixed;inset:0;background:#0007;display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.line{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.line span:first-child{flex:1}
+.hide{display:none!important}
+.muted{color:var(--mut)}
+.err{color:var(--pri);min-height:1.4em}
+.ok{text-align:center;padding:30px 0}
+.ok b{font-size:22px}
+ol{padding-inline-start:20px}
+</style>
+</head>
+<body>
+<header><h1>شیرینی</h1><button id="inst">دابەزاندنی ئەپ</button></header>
+<div class="chips" id="chips"></div>
+<p id="empty" class="muted" style="padding:0 16px">مینیوەکە بار دەکرێت...</p>
+<div class="grid" id="grid"></div>
+
+<div id="bar" class="hide"><button class="pri" id="open"><span>سەبەتە (<span id="cnt">0</span>)</span><span id="tot"></span></button></div>
+
+<div class="shade hide" id="cart"><div class="sheet" role="dialog" aria-label="سەبەتە">
+  <div id="form">
+    <h2 style="margin-top:0">سەبەتەکەم</h2>
+    <div id="lines"></div>
+    <p><b>کۆ: <span id="sum"></span></b></p>
+    <label for="nm">ناو *</label><input id="nm" autocomplete="name">
+    <label for="ph">ژمارەی مۆبایل *</label><input id="ph" type="tel" inputmode="tel" dir="ltr" autocomplete="tel">
+    <label for="ad">ناونیشان *</label><textarea id="ad" rows="2" autocomplete="street-address"></textarea>
+    <label for="nt">تێبینی (ئارەزوومەندانە)</label><textarea id="nt" rows="2"></textarea>
+    <p class="err" id="err" role="alert"></p>
+    <div style="display:flex;gap:8px"><button class="pri" id="send" style="flex:1">ناردنی داواکاری</button><button id="close">داخستن</button></div>
+  </div>
+  <div id="done" class="ok hide"><b>داواکارییەکەت نێردرا</b><p class="muted">دوای ماوەیەکی کەم پەیوەندیت پێوە دەکەین.</p><button class="pri" id="again">مینیو</button></div>
+</div></div>
+
+<div class="shade hide" id="help"><div class="sheet" role="dialog" aria-label="دابەزاندن">
+  <h2 style="margin-top:0">دابەزاندنی ئەپ</h2>
+  <h3>ئەندرۆید (Chrome)</h3><ol><li>لیستی سێ نوقتەکە (⋮) بکەرەوە.</li><li>«Install app» یان «Add to Home screen» هەڵبژێرە.</li><li>دووپاتی بکەرەوە.</li></ol>
+  <h3>ئایفۆن (Safari)</h3><ol><li>ئەم لاپەڕەیە لە Safari بکەرەوە.</li><li>دوگمەی Share (چوارگۆشەی تیرەکەدار) دابگرە.</li><li>«Add to Home Screen» هەڵبژێرە.</li><li>«Add» دابگرە.</li></ol>
+  <button id="hclose" class="pri" style="width:100%">باشە</button>
+</div></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getDatabase,ref,onValue,push,set} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+const db=getDatabase(initializeApp({
+  apiKey:"AIzaSyDLxTVgoGaTmN5eZdJXHXuLq95xQY67bUs",
+  authDomain:"shyryny.firebaseapp.com",
+  databaseURL:"https://shyryny-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"shyryny",
+  appId:"1:458463996741:web:96e04695e1ea5480abac2c"
+}));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>Number(n||0).toLocaleString("en")+" دینار";
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let items={},cart=store.get("cart")||{},cat="هەموو";
+
+/* menu */
+onValue(ref(db,"items"),s=>{
+  items=Object.fromEntries(Object.entries(s.val()||{}).filter(([,i])=>i.active!==false));
+  for(const id in cart)if(!items[id])delete cart[id];
+  render();
+},()=>{$("empty").textContent="مینیوەکە بار نەبوو. ئینتەرنێتەکەت بپشکنە."});
+
+function render(){
+  const ids=Object.keys(items);
+  $("empty").classList.toggle("hide",!!ids.length);
+  if(!ids.length)$("empty").textContent="هێشتا هیچ ئایتمێک نییە.";
+  const cats=["هەموو",...new Set(ids.map(i=>items[i].cat).filter(Boolean))];
+  if(!cats.includes(cat))cat="هەموو";
+  $("chips").innerHTML=cats.length>2?cats.map(c=>`<button data-c="${esc(c)}"${c===cat?' class="on"':""}>${esc(c)}</button>`).join(""):"";
+  $("grid").innerHTML=ids.filter(i=>cat==="هەموو"||items[i].cat===cat).map(id=>{
+    const i=items[id],q=cart[id]||0;
+    return `<div class="item">${i.img?`<img src="${i.img}" alt="${esc(i.name)}">`:`<img alt="">`}<div class="b"><b>${esc(i.name)}</b><div class="d">${esc(i.desc)}</div><div class="price">${money(i.price)}</div>
+    ${q?`<div class="step"><button data-m="${id}" aria-label="کەمکردن">−</button><b>${q}</b><button data-p="${id}" aria-label="زیادکردن">+</button></div>`:`<button class="pri" data-p="${id}" style="margin-top:8px">زیادکردن</button>`}</div></div>`}).join("");
+  bar();if(!$("cart").classList.contains("hide"))lines();
+}
+function bar(){
+  store.set("cart",cart);
+  const n=Object.values(cart).reduce((a,b)=>a+b,0),t=total();
+  $("bar").classList.toggle("hide",!n);$("cnt").textContent=n;$("tot").textContent=money(t);
+}
+const total=()=>Object.entries(cart).reduce((a,[id,q])=>a+(items[id]?.price||0)*q,0);
+function change(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];render()}
+$("chips").onclick=e=>{if(e.target.dataset.c){cat=e.target.dataset.c;render()}};
+$("grid").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.p)change(b.dataset.p,1);if(b.dataset.m)change(b.dataset.m,-1)};
+
+/* cart sheet */
+function lines(){
+  const ids=Object.keys(cart);
+  if(!ids.length){closeCart();return}
+  $("lines").innerHTML=ids.map(id=>`<div class="line"><span>${esc(items[id].name)}<br><span class="muted">${money(items[id].price*cart[id])}</span></span><span class="step" style="margin:0;gap:8px"><button data-m="${id}" aria-label="کەمکردن">−</button><b>${cart[id]}</b><button data-p="${id}" aria-label="زیادکردن">+</button></span></div>`).join("");
+  $("sum").textContent=money(total());
+}
+$("lines").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.p)change(b.dataset.p,1);if(b.dataset.m)change(b.dataset.m,-1)};
+function openCart(){
+  const c=store.get("cust")||{};$("nm").value=c.name||"";$("ph").value=c.phone||"";$("ad").value=c.address||"";
+  $("form").classList.remove("hide");$("done").classList.add("hide");$("err").textContent="";lines();$("cart").classList.remove("hide");
+}
+function closeCart(){$("cart").classList.add("hide")}
+$("open").onclick=openCart;$("close").onclick=closeCart;$("again").onclick=closeCart;
+$("cart").onclick=e=>{if(e.target===$("cart"))closeCart()};
+
+$("send").onclick=async()=>{
+  const name=$("nm").value.trim(),phone=$("ph").value.trim(),address=$("ad").value.trim(),note=$("nt").value.trim();
+  if(!name||!address||phone.replace(/\D/g,"").length<10){$("err").textContent="ناو، ناونیشان و ژمارەی مۆبایلی دروست (١٠ ژمارە) پێویستن.";return}
+  const list=Object.entries(cart).map(([id,qty])=>({id,name:items[id].name,price:items[id].price,qty}));
+  $("send").disabled=true;$("err").textContent="";
+  try{
+    await set(push(ref(db,"orders")),{name,phone,address,note,items:list,total:total(),status:"new",ts:Date.now()});
+    store.set("cust",{name,phone,address});cart={};$("nt").value="";bar();render();
+    $("form").classList.add("hide");$("done").classList.remove("hide");
+  }catch{$("err").textContent="ناردن سەرکەوتوو نەبوو. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە."}
+  $("send").disabled=false;
+};
+
+/* install */
+let dp=null;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e});
+if(matchMedia("(display-mode: standalone)").matches||navigator.standalone)$("inst").classList.add("hide");
+$("inst").onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null}else $("help").classList.remove("hide")};
+$("hclose").onclick=()=>$("help").classList.add("hide");
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
