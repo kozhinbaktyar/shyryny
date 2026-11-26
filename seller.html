@@ -35,6 +35,7 @@ th{color:var(--mut);font-weight:600}
 .stat{flex:1!important;min-width:140px}
 .muted{color:var(--mut)}
 .tag{font-size:13px;padding:2px 10px;border-radius:99px;border:1px solid var(--bd)}
+.err{color:var(--pri);min-height:1.4em}
 .hide{display:none!important}
 #login{max-width:360px;margin:12vh auto;padding:0 16px}
 #receipt{display:none}
@@ -44,20 +45,21 @@ th{color:var(--mut);font-weight:600}
 <body>
 <section id="login" class="box">
   <h1>چوونەژوورەوە</h1>
-  <label for="em">ئیمەیڵ</label><input id="em" type="email" dir="ltr">
+  <label for="em">ناوی بەکارهێنەر یان ئیمەیڵ</label><input id="em" dir="ltr" autocapitalize="none" autocomplete="username">
   <label for="pw">وشەی نهێنی</label><input id="pw" type="password" dir="ltr">
   <p id="lerr" class="muted"></p>
   <button class="pri" id="lbtn">چوونەژوورەوە</button>
 </section>
 
 <div id="app" class="hide">
-<header><h1>شیرینی — فرۆشیار</h1>
-  <label class="row" style="margin:0"><input type="checkbox" id="auto" style="width:auto" checked> چاپی خۆکار</label>
+<header><h1>شیرینی — فرۆشیار</h1><span id="who" class="muted"></span>
+  <label class="row" id="autoL" style="margin:0"><input type="checkbox" id="auto" style="width:auto" checked> چاپی خۆکار</label>
   <button id="out">دەرچوون</button></header>
 <nav id="tabs">
   <button data-t="orders" class="on">داواکاری</button>
   <button data-t="items">ئایتمەکان</button>
   <button data-t="report">ڕاپۆرت</button>
+  <button data-t="staff">ستاف</button>
 </nav>
 <main>
 <section id="t-orders"><p id="oempty" class="muted">هێشتا داواکاری نییە. داواکاری نوێ لێرە دەردەکەوێت و چاپ دەکرێت.</p><div id="olist"></div></section>
@@ -78,6 +80,17 @@ th{color:var(--mut);font-weight:600}
   <div class="grid" id="ilist"></div>
 </section>
 
+<section id="t-staff" class="hide">
+  <div class="box"><h2 style="margin-top:0">ستافی نوێ</h2>
+    <label for="sn">ناو</label><input id="sn">
+    <div class="row"><div style="flex:1;min-width:140px"><label for="sp">مۆبایل</label><input id="sp" type="tel" dir="ltr"></div>
+    <div style="flex:1;min-width:140px"><label for="sr">ڕۆڵ</label><select id="sr"><option value="cashier">کاشێر</option><option value="delivery">دلیڤەری</option><option value="waiter">گارسۆن</option><option value="admin">بەڕێوەبەر</option></select></div></div>
+    <label for="se">ناوی بەکارهێنەر یان ئیمەیڵ</label><input id="se" dir="ltr" autocapitalize="none">
+    <label for="sw">وشەی نهێنی (٦ پیت یان زیاتر)</label><input id="sw" dir="ltr" autocapitalize="none">
+    <p id="serr" class="err" role="alert"></p><button class="pri" id="sadd">دروستکردنی ستاف</button></div>
+  <div id="slist"></div>
+</section>
+
 <section id="t-report" class="hide">
   <div class="box row">
     <select id="rtype" style="width:auto"><option value="day">ڕۆژانە</option><option value="month">مانگانە</option></select>
@@ -96,54 +109,69 @@ th{color:var(--mut);font-weight:600}
 <div id="receipt"></div>
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {initializeApp,getApps} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getDatabase,ref,get,onValue,push,set,update,remove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
-const app=initializeApp({
+const cfg={
   apiKey:"AIzaSyDLxTVgoGaTmN5eZdJXHXuLq95xQY67bUs",
   authDomain:"shyryny.firebaseapp.com",
   databaseURL:"https://shyryny-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:"shyryny",
   appId:"1:458463996741:web:96e04695e1ea5480abac2c"
-});
+};
+const app=initializeApp(cfg);
 const auth=getAuth(app),db=getDatabase(app);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=n=>Number(n||0).toLocaleString("en")+" دینار";
 const STAT={new:"نوێ",ready:"ئامادەیە",onway:"بەڕێکەوت",done:"گەیشت",cancelled:"هەڵوەشاوە"};
+const mail=v=>v.includes("@")?v:v+"@shyryny.app";
+const ROLE={admin:"بەڕێوەبەر",cashier:"کاشێر",delivery:"دلیڤەری",waiter:"گارسۆن"};
+const PERM={admin:["orders","items","report","staff"],cashier:["orders","report"],delivery:["orders"],waiter:["orders"]};
+let role="",me={},staff={};
 let items={},orders={},imgData="",started=false,printed=new Set(),first=true;
 
 /* ---- login ---- */
 $("lbtn").onclick=async()=>{
   $("lerr").textContent="";
-  try{await signInWithEmailAndPassword(auth,$("em").value.trim(),$("pw").value)}
-  catch(e){const m={"auth/invalid-credential":"ئیمەیڵ یان وشەی نهێنی هەڵەیە، یان ئەم بەکارهێنەرە لە Authentication نییە.","auth/invalid-email":"ئیمەیڵەکە ڕاست نییە و دەبێت @ی تێدا بێت.","auth/operation-not-allowed":"لە Firebase → Authentication → Sign-in method، Email/Password چالاک نەکراوە.","auth/network-request-failed":"پەیوەندی ئینتەرنێت نییە.","auth/too-many-requests":"زۆر هەوڵت دا، کەمێک چاوەڕێ بکە."}[e.code];
+  try{await signInWithEmailAndPassword(auth,mail($("em").value.trim().toLowerCase()),$("pw").value)}
+  catch(e){const m={"auth/invalid-credential":"ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە، یان ئەم بەکارهێنەرە لە Authentication نییە.","auth/invalid-email":"ئیمەیڵەکە ڕاست نییە و دەبێت @ی تێدا بێت.","auth/operation-not-allowed":"لە Firebase → Authentication → Sign-in method، Email/Password چالاک نەکراوە.","auth/network-request-failed":"پەیوەندی ئینتەرنێت نییە.","auth/too-many-requests":"زۆر هەوڵت دا، کەمێک چاوەڕێ بکە."}[e.code];
     $("lerr").textContent=(m||"هەڵە")+" ("+e.code+")"}
 };
-$("out").onclick=()=>signOut(auth);
+$("out").onclick=async()=>{await signOut(auth);location.reload()};
 onAuthStateChanged(auth,async u=>{
   if(u){
-    let ok=false,why="";
-    try{const v=(await get(ref(db,"staff/"+u.uid))).val();ok=v?.role==="admin";if(!v)why="لە /staff تۆمارێک نییە کە کلیلەکەی ئەم UID بێت: "+u.uid;else if(!ok)why="role ی ئەم تۆمارە admin نییە."}
+    let why="";me={};role="";
+    try{me=(await get(ref(db,"staff/"+u.uid))).val()||{};role=me.role;
+      if(!me.role)why="لە /staff تۆمارێک نییە کە کلیلەکەی ئەم UID بێت: "+u.uid;else if(!PERM[role])why="role ی ئەم تۆمارە دروست نییە."}
     catch(e){why="Rulesـەکان ڕێگە نادەن بخوێنرێتەوە (Permission denied). Rulesـی نوێ Publish بکە."}
-    if(!ok){$("lerr").textContent=why;await signOut(auth);return}
+    if(why||!PERM[role]){$("lerr").textContent=why||"ئەم هەژمارە ڕێگەپێدراو نییە.";await signOut(auth);return}
+    applyRole();
   }
   $("login").classList.toggle("hide",!!u);
   $("app").classList.toggle("hide",!u);
   if(u&&!started){started=true;listen()}
 });
 
+function applyRole(){
+  const p=PERM[role],a=["admin","cashier"].includes(role);
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("hide",!p.includes(b.dataset.t)));
+  $("who").textContent=(me.name||"")+" — "+ROLE[role];
+  $("autoL").classList.toggle("hide",!a);$("auto").checked=a;
+}
+
 /* ---- tabs ---- */
 $("tabs").onclick=e=>{
   const t=e.target.dataset.t;if(!t)return;
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b===e.target));
-  ["orders","items","report"].forEach(k=>$("t-"+k).classList.toggle("hide",k!==t));
+  ["orders","items","report","staff"].forEach(k=>$("t-"+k).classList.toggle("hide",k!==t));
   if(t==="report")report();
 };
 
 /* ---- realtime listeners ---- */
 function listen(){
+  if(role==="admin")onValue(ref(db,"staff"),s=>{staff=s.val()||{};renderStaff()});
   onValue(ref(db,"items"),s=>{items=s.val()||{};renderItems()});
   onValue(ref(db,"orders"),s=>{
     orders=s.val()||{};renderOrders();
@@ -200,7 +228,7 @@ function renderOrders(){
   $("olist").innerHTML=ids.map(id=>{const o=orders[id];return `<div class="box"><div class="row"><b>${esc(o.name)}</b><a href="tel:${esc(o.phone)}" dir="ltr">${esc(o.phone)}</a><span class="muted">${new Date(o.ts).toLocaleString("en-GB")}</span><span class="tag">${STAT[o.status]||""}</span></div>
   <div class="muted">${esc(o.address)}${o.note?" — "+esc(o.note):""}</div>
   <ul>${(o.items||[]).map(i=>`<li>${esc(i.name)} × ${i.qty}</li>`).join("")}</ul>
-  <div class="row"><b>${money(o.total)}</b><select data-s="${id}" style="width:auto">${Object.entries(STAT).map(([k,v])=>`<option value="${k}"${k===o.status?" selected":""}>${v}</option>`).join("")}</select><button data-p="${id}">چاپکردن</button></div></div>`}).join("");
+  <div class="row"><b>${money(o.total)}</b><select data-s="${id}" style="width:auto">${Object.entries(STAT).filter(([k])=>role!=="delivery"||k===o.status||["onway","done"].includes(k)).map(([k,v])=>`<option value="${k}"${k===o.status?" selected":""}>${v}</option>`).join("")}</select><button data-p="${id}">چاپکردن</button></div></div>`}).join("");
 }
 $("olist").onchange=e=>{if(e.target.dataset.s)update(ref(db,"orders/"+e.target.dataset.s),{status:e.target.value})};
 $("olist").onclick=e=>{const p=e.target.dataset.p;if(p)printOrder(p)};
@@ -209,6 +237,28 @@ function printOrder(id){
   $("receipt").innerHTML=`<h3 style="text-align:center;margin:0">شیرینی</h3><hr>${new Date(o.ts).toLocaleString("en-GB")}<br>${esc(o.name)} — ${esc(o.phone)}<br>${esc(o.address)}${o.note?"<br>"+esc(o.note):""}<hr>${(o.items||[]).map(i=>`${esc(i.name)} × ${i.qty} = ${(i.price*i.qty).toLocaleString("en")}`).join("<br>")}<hr><b>کۆ: ${money(o.total)}</b>`;
   setTimeout(()=>window.print(),150);
 }
+
+/* ---- staff ---- */
+$("sadd").onclick=async()=>{
+  const name=$("sn").value.trim(),phone=$("sp").value.trim(),raw=$("se").value.trim().toLowerCase(),pw=$("sw").value,r=$("sr").value;
+  $("serr").textContent="";
+  if(!name||!raw||pw.length<6){$("serr").textContent="ناو، ناوی بەکارهێنەر و وشەی نهێنی (٦ پیت یان زیاتر) پێویستن.";return}
+  $("sadd").disabled=true;
+  const au2=getAuth(getApps().find(x=>x.name==="sec")||initializeApp(cfg,"sec"));
+  try{
+    const email=mail(raw),c=await createUserWithEmailAndPassword(au2,email,pw);
+    await set(ref(db,"staff/"+c.user.uid),{name,phone,email,role:r,ts:Date.now()});
+    await signOut(au2);
+    ["sn","sp","se","sw"].forEach(i=>$(i).value="");
+  }catch(e){$("serr").textContent=e.code==="auth/email-already-in-use"?"ئەم ناوی بەکارهێنەرە پێشتر بەکارهاتووە.":e.code==="auth/weak-password"?"وشەی نهێنی لاوازە.":"دروست نەکرا. دووبارە هەوڵ بدەرەوە."}
+  $("sadd").disabled=false;
+};
+function renderStaff(){
+  const my=auth.currentUser?.uid;
+  $("slist").innerHTML=Object.entries(staff).map(([id,s])=>`<div class="box"><div class="row"><b>${esc(s.name)}</b><span class="tag">${ROLE[s.role]||esc(s.role)}</span><span class="muted" dir="ltr">${esc(s.email)}</span><span class="muted" dir="ltr">${esc(s.phone)}</span></div>${id===my?"":`<div class="row" style="margin-top:8px"><select data-r="${id}" style="width:auto">${Object.entries(ROLE).map(([k,v])=>`<option value="${k}"${k===s.role?" selected":""}>${v}</option>`).join("")}</select><button class="del" data-x="${id}">لابردنی دەستڕاگەیشتن</button></div>`}</div>`).join("");
+}
+$("slist").onchange=e=>{if(e.target.dataset.r)update(ref(db,"staff/"+e.target.dataset.r),{role:e.target.value})};
+$("slist").onclick=e=>{const id=e.target.dataset.x;if(id&&confirm("ئەم ستافە چیتر ناتوانێت بچێتە ژوورەوە. بەردەوام بیت؟"))remove(ref(db,"staff/"+id))};
 
 /* ---- reports ---- */
 const today=new Date().toLocaleDateString("en-CA");
