@@ -70,6 +70,7 @@ th{color:var(--mut);font-weight:600}
     <div class="row"><div style="flex:1;min-width:140px"><label for="iprice">نرخ (دینار)</label><input id="iprice" type="number" min="0" inputmode="numeric"></div>
     <div style="flex:1;min-width:140px"><label for="icat">پۆل</label><input id="icat" placeholder="کێک، باقلاوە..."></div></div>
     <label for="idesc">باسکردن</label><textarea id="idesc" rows="2"></textarea>
+    <label class="row" style="margin-top:12px;color:var(--ink)"><input type="checkbox" id="ifeat" style="width:auto"> تایبەت: لە سەرەوەی مینیوی کڕیار پیشان بدرێت</label>
     <label for="ifile">وێنە</label><input id="ifile" type="file" accept="image/*">
     <img id="iprev" alt="" class="hide" style="height:90px;margin-top:8px;border-radius:8px">
     <div class="row" style="margin-top:14px"><button class="pri" id="isave">پاشەکەوتکردنی ئایتم</button><button id="icancel" class="hide">هەڵوەشاندنەوە</button></div>
@@ -110,21 +111,23 @@ const auth=getAuth(app),db=getDatabase(app);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=n=>Number(n||0).toLocaleString("en")+" دینار";
-const STAT={new:"نوێ",ready:"ئامادەکراو",done:"گەیەندرا",cancelled:"هەڵوەشاوە"};
+const STAT={new:"نوێ",ready:"ئامادەیە",onway:"بەڕێکەوت",done:"گەیشت",cancelled:"هەڵوەشاوە"};
 let items={},orders={},imgData="",started=false,printed=new Set(),first=true;
 
 /* ---- login ---- */
 $("lbtn").onclick=async()=>{
   $("lerr").textContent="";
   try{await signInWithEmailAndPassword(auth,$("em").value.trim(),$("pw").value)}
-  catch{$("lerr").textContent="ئیمەیڵ یان وشەی نهێنی هەڵەیە. دووبارە هەوڵ بدەرەوە."}
+  catch(e){const m={"auth/invalid-credential":"ئیمەیڵ یان وشەی نهێنی هەڵەیە، یان ئەم بەکارهێنەرە لە Authentication نییە.","auth/invalid-email":"ئیمەیڵەکە ڕاست نییە و دەبێت @ی تێدا بێت.","auth/operation-not-allowed":"لە Firebase → Authentication → Sign-in method، Email/Password چالاک نەکراوە.","auth/network-request-failed":"پەیوەندی ئینتەرنێت نییە.","auth/too-many-requests":"زۆر هەوڵت دا، کەمێک چاوەڕێ بکە."}[e.code];
+    $("lerr").textContent=(m||"هەڵە")+" ("+e.code+")"}
 };
 $("out").onclick=()=>signOut(auth);
 onAuthStateChanged(auth,async u=>{
   if(u){
-    let ok=false;
-    try{ok=(await get(ref(db,"staff/"+u.uid))).val()?.role==="admin"}catch{}
-    if(!ok){$("lerr").textContent="ئەم هەژمارە ڕێگەپێدراو نییە (لە staff وەک admin تۆمار نەکراوە).";await signOut(auth);return}
+    let ok=false,why="";
+    try{const v=(await get(ref(db,"staff/"+u.uid))).val();ok=v?.role==="admin";if(!v)why="لە /staff تۆمارێک نییە کە کلیلەکەی ئەم UID بێت: "+u.uid;else if(!ok)why="role ی ئەم تۆمارە admin نییە."}
+    catch(e){why="Rulesـەکان ڕێگە نادەن بخوێنرێتەوە (Permission denied). Rulesـی نوێ Publish بکە."}
+    if(!ok){$("lerr").textContent=why;await signOut(auth);return}
   }
   $("login").classList.toggle("hide",!!u);
   $("app").classList.toggle("hide",!u);
@@ -163,14 +166,14 @@ $("ifile").onchange=e=>{
 };
 function resetForm(){
   ["iid","iname","iprice","icat","idesc","ifile"].forEach(i=>$(i).value="");
-  imgData="";$("iprev").classList.add("hide");$("ftitle").textContent="ئایتمی نوێ";$("icancel").classList.add("hide");
+  $("ifeat").checked=false;imgData="";$("iprev").classList.add("hide");$("ftitle").textContent="ئایتمی نوێ";$("icancel").classList.add("hide");
 }
 $("icancel").onclick=resetForm;
 $("isave").onclick=async()=>{
   const name=$("iname").value.trim(),price=Number($("iprice").value);
   if(!name||!(price>=0)||$("iprice").value===""){alert("ناو و نرخ پێویستن.");return}
   const id=$("iid").value,old=id?items[id]:null;
-  const data={name,price,cat:$("icat").value.trim(),desc:$("idesc").value.trim(),img:imgData||old?.img||"",active:old?old.active!==false:true};
+  const data={name,price,cat:$("icat").value.trim(),desc:$("idesc").value.trim(),img:imgData||old?.img||"",active:old?old.active!==false:true,feat:$("ifeat").checked};
   try{
     if(id)await set(ref(db,"items/"+id),data);else await set(push(ref(db,"items")),data);
     resetForm();
@@ -178,13 +181,14 @@ $("isave").onclick=async()=>{
 };
 function renderItems(){
   const ids=Object.keys(items);
-  $("ilist").innerHTML=ids.length?ids.map(id=>{const i=items[id];return `<div class="item">${i.img?`<img src="${i.img}" alt="">`:`<img alt="">`}<div><b>${esc(i.name)}</b><div class="muted">${esc(i.cat)}</div><div>${money(i.price)}</div><div class="muted">${esc(i.desc)}</div>
-  <div class="row" style="margin-top:8px"><button data-e="${id}">دەستکاری</button><button data-a="${id}">${i.active===false?"پیشاندان":"شاردنەوە"}</button><button class="del" data-d="${id}">سڕینەوە</button></div></div></div>`}).join(""):`<p class="muted">هیچ ئایتمێک نییە. لە فۆرمەکەی سەرەوە یەکەم ئایتم زیاد بکە.</p>`;
+  $("ilist").innerHTML=ids.length?ids.map(id=>{const i=items[id];return `<div class="item">${i.img?`<img src="${i.img}" alt="">`:`<img alt="">`}<div><b>${i.feat?"★ ":""}${esc(i.name)}</b><div class="muted">${esc(i.cat)}</div><div>${money(i.price)}</div><div class="muted">${esc(i.desc)}</div>
+  <div class="row" style="margin-top:8px"><button data-e="${id}">دەستکاری</button><button data-f="${id}">${i.feat?"لابردنی تایبەت":"تایبەت ★"}</button><button data-a="${id}">${i.active===false?"پیشاندان":"شاردنەوە"}</button><button class="del" data-d="${id}">سڕینەوە</button></div></div></div>`}).join(""):`<p class="muted">هیچ ئایتمێک نییە. لە فۆرمەکەی سەرەوە یەکەم ئایتم زیاد بکە.</p>`;
 }
 $("ilist").onclick=async e=>{
   const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.e){const i=items[b.dataset.e];$("iid").value=b.dataset.e;$("iname").value=i.name;$("iprice").value=i.price;$("icat").value=i.cat||"";$("idesc").value=i.desc||"";imgData="";
+  if(b.dataset.e){const i=items[b.dataset.e];$("iid").value=b.dataset.e;$("iname").value=i.name;$("iprice").value=i.price;$("icat").value=i.cat||"";$("idesc").value=i.desc||"";$("ifeat").checked=!!i.feat;imgData="";
     if(i.img){$("iprev").src=i.img;$("iprev").classList.remove("hide")}$("ftitle").textContent="دەستکاریکردنی ئایتم";$("icancel").classList.remove("hide");scrollTo({top:0,behavior:"smooth"})}
+  if(b.dataset.f)update(ref(db,"items/"+b.dataset.f),{feat:!items[b.dataset.f].feat});
   if(b.dataset.a)update(ref(db,"items/"+b.dataset.a),{active:items[b.dataset.a].active===false});
   if(b.dataset.d&&confirm("ئەم ئایتمە بسڕدرێتەوە؟"))remove(ref(db,"items/"+b.dataset.d));
 };
