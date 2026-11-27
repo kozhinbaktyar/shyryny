@@ -212,7 +212,7 @@ function draw(){
     const x=`<button data-x="${o.id}" aria-label="لابردن">×</button>`;
     if(s==="cancelled"||s==="gone")return `<div class="trk"><div class="top"><b>داواکاری ${t}: هەڵوەشێندرایەوە</b>${x}</div></div>`;
     const k=s==="onway"?1:FLOW.indexOf(s);
-    if(s==="done")return `<div class="trk" style="text-align:center"><div class="top"><b style="font-size:18px">🍰 نۆشی گیانت بێت!</b>${x}</div><p class="muted" style="margin:6px 0 0">سوپاس کە لەگەڵمان بوویت. هیوادارین چێژت لێ وەرگرتبێت و زوو دووبارە ببینینەوە.</p></div>`;
+    if(s==="done")return `<div class="trk" style="text-align:center"><div class="top"><b style="font-size:18px">🍰 نۆشی گیانت بێت!</b>${x}</div><p class="muted" style="margin:6px 0 0">سوپاس کە لەگەڵمان بوویت. هیوادارین چێژت لێ وەرگرتبێت.</p></div>`;
     return `<div class="trk"><div class="top"><b>داواکاری ${t}: ${LBL[s]||""}</b>${s==="done"?x:""}</div><div class="steps">${FLOW.map((f,i)=>`<span${i<=k?' class="on"':""}>${LBL[f]}</span>`).join("")}</div></div>`;
   }).join("");
 }
