@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>شەکرۆکە — مێز</title>
+<meta name="theme-color" content="#1b3fd1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f4f5fc;--card:#fff;--ink:#0f1a52;--mut:#5d6592;--pri:#1b3fd1;--bd:#e0e3f3}
+@media(prefers-color-scheme:dark){:root{--bg:#090e2b;--card:#131a42;--ink:#eef0ff;--mut:#a7aed8;--pri:#4a6cf7;--bd:#2a336b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Naskh Arabic","Segoe UI",Tahoma,sans-serif;padding-bottom:90px}
+header{background:var(--pri);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:10px}
+header h1{margin:0;font-size:22px;flex:1}
+button,input,textarea{font:inherit;color:inherit}
+button{border:1px solid var(--bd);background:var(--card);padding:8px 16px;border-radius:10px;cursor:pointer}
+button.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+header button{background:transparent;border-color:#fff8;color:#fff;font-size:14px}
+input,textarea{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+label{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px}
+.chips button{flex:none;border-radius:99px}
+.chips button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:0 16px;max-width:960px;margin:0 auto}
+.item{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.item img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--bd);display:block}
+.item .b{padding:10px 12px;display:flex;flex-direction:column;gap:2px;flex:1}
+.item .d{font-size:13px;color:var(--mut);flex:1}
+.price{font-weight:700}
+.trk{margin:12px 16px 0;padding:12px 14px;background:var(--card);border:1px solid var(--pri);border-radius:14px}
+.trk .top{display:flex;align-items:center;gap:8px}.trk .top b{flex:1}
+.steps{display:flex;gap:6px;margin-top:10px}
+.steps span{flex:1;text-align:center;font-size:13px;color:var(--mut);padding-top:6px;border-top:5px solid var(--bd);border-radius:3px}
+.steps span.on{color:var(--ink);border-color:var(--pri);font-weight:700}
+.sec{font-size:18px;margin:4px 16px 8px}
+.featrow{display:flex;gap:12px;overflow-x:auto;padding:0 16px 14px}
+.featrow .item{flex:none;width:190px;border-color:var(--pri)}
+.step{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.step button{width:40px;height:40px;padding:0;font-size:20px}
+.step b{min-width:28px;text-align:center}
+#bar{position:fixed;inset:auto 0 0 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--bd)}
+#bar button{width:100%;display:flex;justify-content:space-between;padding:14px 18px;font-weight:700}
+.shade{position:fixed;inset:0;background:#0007;display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.line{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.line span:first-child{flex:1}
+.hide{display:none!important}
+.muted{color:var(--mut)}
+.err{color:var(--pri);min-height:1.4em}
+.ok{text-align:center;padding:30px 0}
+.ok b{font-size:22px}
+ol{padding-inline-start:20px}
+
+/* ---- Shekroke theme ---- */
+:root{--red:#e03a4e;--gold:#f6bc3c;--blue:#1b3fd1}
+body{font-family:Vazirmatn,"Noto Naskh Arabic","Segoe UI",Tahoma,sans-serif}
+header{background:var(--blue)}
+header h1{display:flex}header h1 img{height:46px;width:auto}
+.chips{position:sticky;top:0;z-index:4;background:var(--bg)}
+.chips:empty{display:none}
+.chips button{font-weight:600}
+.grid{gap:14px}
+.item{border-radius:18px;box-shadow:0 6px 18px #0f1a5214}
+.item img{aspect-ratio:4/3;background:var(--blue)}
+.item .b{gap:4px}
+.price{font-weight:800;color:var(--ink);font-size:17px}
+button{border-radius:12px;font-weight:600}
+.sec{font-weight:800;display:flex;align-items:center;gap:8px;margin-top:14px}
+.sec::after{content:"";width:34px;height:5px;border-radius:9px;background:var(--gold)}
+.featrow .item{border:2px solid var(--gold)}
+.trk{border:2px solid var(--blue);border-radius:18px}
+.steps span.on{border-color:var(--red)}
+#bar{z-index:6}
+#bar button{border-radius:16px;box-shadow:0 8px 22px #1b3fd155}
+#cnt{display:inline-block;min-width:24px;border-radius:99px;background:var(--gold);color:#0f1a52}
+.sheet{border-radius:24px 24px 0 0}
+.err{color:var(--red);font-weight:600}
+.ok img{width:150px;height:150px;object-fit:cover;object-position:50% 45%;border-radius:50%;border:5px solid var(--gold);display:block;margin:0 auto 14px}
+.banner{position:relative;margin:12px 16px 0;border-radius:20px;overflow:hidden;max-width:928px}
+.banner img{display:block;width:100%;height:190px;object-fit:cover;object-position:50% 42%}
+@media(min-width:720px){.banner{margin:12px auto 0}.banner img{height:260px}}
+#tl{color:#fff}
+footer{background:var(--blue);color:#fff;text-align:center;padding:26px 16px 30px;margin-top:28px}footer img{width:170px;height:auto;display:block;margin:0 auto 8px}footer a{color:#fff;font-weight:600}
+</style>
+</head>
+<body>
+<header><h1><img src="logo-white.png" alt="شەکرۆکە" width="500" height="196"></h1><span id="tl" style="font-weight:700"></span></header>
+<div id="track"></div>
+<div class="banner"><img src="mood.webp" alt="دوو وافڵی شەکرۆکە" width="560" height="700"></div>
+<div class="chips" id="chips"></div>
+<p id="empty" class="muted" style="padding:0 16px">مینیوەکە بار دەکرێت...</p>
+<div id="featbox" class="hide"><h2 class="sec">★ هەڵبژاردەی تایبەت</h2><div class="featrow" id="feat"></div></div>
+<div class="grid" id="grid"></div>
+<footer><img src="logo-white.png" alt="شەکرۆکە" width="500" height="196"><a href="https://www.tiktok.com/@sekroke" target="_blank" rel="noopener" dir="ltr">TikTok @sekroke</a></footer>
+
+<div id="bar" class="hide"><button class="pri" id="open"><span>سەبەتە (<span id="cnt">0</span>)</span><span id="tot"></span></button></div>
+
+<div class="shade hide" id="cart"><div class="sheet" role="dialog" aria-label="سەبەتە">
+  <div id="form">
+    <h2 style="margin-top:0">سەبەتەکەم</h2>
+    <div id="lines"></div>
+    <p><b>کۆ: <span id="sum"></span></b></p>
+    <label for="tb">ژمارەی مێز *</label><input id="tb" inputmode="numeric" maxlength="3" dir="ltr" placeholder="ژمارەی سەر مێزەکەت بنووسە">
+    <label for="nm">ناو (ئارەزوومەندانە)</label><input id="nm" autocomplete="name">
+    <label for="nt">تێبینی (ئارەزوومەندانە)</label><textarea id="nt" rows="2"></textarea>
+    <p class="err" id="err" role="alert"></p>
+    <div style="display:flex;gap:8px"><button class="pri" id="send" style="flex:1">ناردنی داواکاری</button><button id="close">داخستن</button></div>
+  </div>
+  <div id="done" class="ok hide"><img src="mood.webp" alt=""><b>داواکارییەکەت نێردرا</b><p class="muted">دۆخی داواکارییەکەت لە سەرەوەی لاپەڕەکە دەبینیت.</p><button class="pri" id="again">مینیو</button></div>
+</div></div>
+
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getDatabase,ref,onValue,push,set} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+const db=getDatabase(initializeApp({
+  apiKey:"AIzaSyDLxTVgoGaTmN5eZdJXHXuLq95xQY67bUs",
+  authDomain:"shyryny.firebaseapp.com",
+  databaseURL:"https://shyryny-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"shyryny",
+  appId:"1:458463996741:web:96e04695e1ea5480abac2c"
+}));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>Number(n||0).toLocaleString("en")+" دینار";
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const TABLE=(new URLSearchParams(location.search).get("t")||"").slice(0,10);
+let items={},cart=store.get("tcart")||{},cat="هەموو";
+
+/* menu */
+onValue(ref(db,"items"),s=>{
+  items=Object.fromEntries(Object.entries(s.val()||{}).filter(([,i])=>i.active!==false));
+  for(const id in cart)if(!items[id])delete cart[id];
+  render();
+},()=>{$("empty").textContent="مینیوەکە بار نەبوو. ئینتەرنێتەکەت بپشکنە."});
+
+function render(){
+  const ids=Object.keys(items);
+  $("empty").classList.toggle("hide",!!ids.length);
+  if(!ids.length)$("empty").textContent="هێشتا هیچ ئایتمێک نییە.";
+  const cats=["هەموو",...new Set(ids.map(i=>items[i].cat).filter(Boolean))];
+  if(!cats.includes(cat))cat="هەموو";
+  $("chips").innerHTML=cats.length>2?cats.map(c=>`<button data-c="${esc(c)}"${c===cat?' class="on"':""}>${esc(c)}</button>`).join(""):"";
+  const card=id=>{
+    const i=items[id],q=cart[id]||0;
+    return `<div class="item">${i.img?`<img src="${i.img}" alt="${esc(i.name)}">`:`<img src="ph.png" alt="">`}<div class="b"><b>${esc(i.name)}</b><div class="d">${esc(i.desc)}</div><div class="price">${money(i.price)}</div>
+    ${q?`<div class="step"><button data-m="${id}" aria-label="کەمکردن">−</button><b>${q}</b><button data-p="${id}" aria-label="زیادکردن">+</button></div>`:`<button class="pri" data-p="${id}" style="margin-top:8px">زیادکردن</button>`}</div></div>`};
+  const fe=ids.filter(i=>items[i].feat);
+  $("featbox").classList.toggle("hide",!fe.length||cat!=="هەموو");
+  $("feat").innerHTML=fe.map(card).join("");
+  $("grid").innerHTML=ids.filter(i=>cat==="هەموو"||items[i].cat===cat).map(card).join("");
+  bar();if(!$("cart").classList.contains("hide"))lines();
+}
+function bar(){
+  store.set("tcart",cart);
+  const n=Object.values(cart).reduce((a,b)=>a+b,0),t=total();
+  $("bar").classList.toggle("hide",!n);$("cnt").textContent=n;$("tot").textContent=money(t);
+}
+const total=()=>Object.entries(cart).reduce((a,[id,q])=>a+(items[id]?.price||0)*q,0);
+function change(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];render()}
+$("chips").onclick=e=>{if(e.target.dataset.c){cat=e.target.dataset.c;render()}};
+$("grid").onclick=$("feat").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.p)change(b.dataset.p,1);if(b.dataset.m)change(b.dataset.m,-1)};
+
+/* cart sheet */
+function lines(){
+  const ids=Object.keys(cart);
+  if(!ids.length){closeCart();return}
+  $("lines").innerHTML=ids.map(id=>`<div class="line"><span>${esc(items[id].name)}<br><span class="muted">${money(items[id].price*cart[id])}</span></span><span class="step" style="margin:0;gap:8px"><button data-m="${id}" aria-label="کەمکردن">−</button><b>${cart[id]}</b><button data-p="${id}" aria-label="زیادکردن">+</button></span></div>`).join("");
+  $("sum").textContent=money(total());
+}
+$("lines").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.p)change(b.dataset.p,1);if(b.dataset.m)change(b.dataset.m,-1)};
+function openCart(){
+  const c=store.get("tcust")||{};$("nm").value=c.name||"";$("tb").value="";
+  $("form").classList.remove("hide");$("done").classList.add("hide");$("err").textContent="";lines();$("cart").classList.remove("hide");
+}
+function closeCart(){$("cart").classList.add("hide")}
+$("open").onclick=openCart;$("close").onclick=closeCart;$("again").onclick=closeCart;
+$("cart").onclick=e=>{if(e.target===$("cart"))closeCart()};
+
+$("send").onclick=async()=>{
+  const norm=v=>v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).trim().replace(/^0+(?=\d)/,"");
+  const name=$("nm").value.trim(),table=norm($("tb").value),note=$("nt").value.trim();
+  if(!/^\d{1,3}$/.test(table)){$("err").textContent="ژمارەی مێزەکەت بنووسە (تەنها ژمارە).";return}
+  if(TABLE&&norm(TABLE)!==table){$("err").textContent="ئەم ژمارەیە لەگەڵ ژمارەی سەر مێزەکەت ناگونجێت. دووبارە بپشکنە.";return}
+  const list=Object.entries(cart).map(([id,qty])=>({id,name:items[id].name,price:items[id].price,qty}));
+  $("send").disabled=true;$("err").textContent="";
+  try{
+    const r=push(ref(db,"orders")),ts=Date.now();
+    await set(r,{type:"dinein",table,name:name||("مێز "+table),phone:"",address:"",note,items:list,total:total(),status:"new",ts});
+    mine.unshift({id:r.key,ts});mine=mine.slice(0,5);store.set("tmine",mine);watch(r.key);
+    store.set("tcust",{name});cart={};$("nt").value="";bar();render();
+    $("form").classList.add("hide");$("done").classList.remove("hide");
+  }catch{$("err").textContent="ناردن سەرکەوتوو نەبوو. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە."}
+  $("send").disabled=false;
+};
+
+/* order tracking */
+const FLOW=["new","ready","done"],LBL={new:"نوێ",ready:"ئامادەیە",onway:"ئامادەیە",done:"گەیشت"};
+let mine=store.get("tmine")||[],st={},un={};
+function watch(id){
+  if(un[id])return;
+  un[id]=onValue(ref(db,"orders/"+id+"/status"),s=>{st[id]=s.val()??"gone";draw()},()=>{st[id]="gone";draw()});
+}
+function draw(){
+  $("track").innerHTML=mine.filter(o=>o.id in st).map(o=>{
+    const s=st[o.id],t=new Date(o.ts).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+    const x=`<button data-x="${o.id}" aria-label="لابردن">×</button>`;
+    if(s==="cancelled"||s==="gone")return `<div class="trk"><div class="top"><b>داواکاری ${t}: هەڵوەشێندرایەوە</b>${x}</div></div>`;
+    const k=s==="onway"?1:FLOW.indexOf(s);
+    if(s==="done")return `<div class="trk" style="text-align:center"><div class="top"><b style="font-size:18px">🍰 نۆشی گیانت بێت!</b>${x}</div><p class="muted" style="margin:6px 0 0">سوپاس کە لەگەڵمان بوویت. هیوادارین چێژت لێ وەرگرتبێت و زوو دووبارە ببینینەوە.</p></div>`;
+    return `<div class="trk"><div class="top"><b>داواکاری ${t}: ${LBL[s]||""}</b>${s==="done"?x:""}</div><div class="steps">${FLOW.map((f,i)=>`<span${i<=k?' class="on"':""}>${LBL[f]}</span>`).join("")}</div></div>`;
+  }).join("");
+}
+$("track").onclick=e=>{const id=e.target.dataset.x;if(!id)return;mine=mine.filter(o=>o.id!==id);store.set("tmine",mine);if(un[id]){un[id]();delete un[id]}delete st[id];draw()};
+mine.forEach(o=>watch(o.id));
+
+</script>
+</body>
+</html>
